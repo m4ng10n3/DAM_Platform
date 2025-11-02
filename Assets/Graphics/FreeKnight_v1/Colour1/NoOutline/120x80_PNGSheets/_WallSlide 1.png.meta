@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9691e862866033441a1cfdb1b2ab7ebc
+guid: fb468b472214dce47bfbe514e264d676
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -106,10 +106,10 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: _WallSlide_0
+      name: _WallSlide 1_0
       rect:
         serializedVersion: 2
-        x: 48
+        x: 51
         y: 3
         width: 21
         height: 32
@@ -119,19 +119,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 20b503e6804c6dd80800000000000000
-      internalID: -8226172128858187006
+      spriteID: 83fe72af7d68eda46a6808009bcb06c3
+      internalID: -1008286824
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: _WallSlide_1
+      name: _WallSlide 1_1
       rect:
         serializedVersion: 2
-        x: 168
+        x: 171
         y: 3
         width: 21
         height: 32
@@ -141,19 +141,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9208bd88231e85e60800000000000000
-      internalID: 7951352749283311657
+      spriteID: ccf0f49e30bae0f4cb2c25ccfe3ab8f2
+      internalID: 1322983500
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: _WallSlide_2
+      name: _WallSlide 1_2
       rect:
         serializedVersion: 2
-        x: 288
+        x: 291
         y: 3
         width: 21
         height: 32
@@ -163,10 +163,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: dabc537a32020df10800000000000000
-      internalID: 2292367547832847277
+      spriteID: 339a606c4f1d70541801a0f3c22f8cc7
+      internalID: -395727134
       vertices: []
       indices: 
       edges: []
@@ -187,9 +187,9 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      _WallSlide_0: -8226172128858187006
-      _WallSlide_1: 7951352749283311657
-      _WallSlide_2: 2292367547832847277
+      _WallSlide 1_0: -1008286824
+      _WallSlide 1_1: 1322983500
+      _WallSlide 1_2: -395727134
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
