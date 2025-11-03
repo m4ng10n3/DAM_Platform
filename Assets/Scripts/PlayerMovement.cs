@@ -129,6 +129,8 @@ public class PlayerMovement : MonoBehaviour
         Vector3 wp = groundCheckTransform.position;
         Vector3Int cell = groundTilemap.WorldToCell(wp);
         isGrounded = groundTilemap.HasTile(cell);
+        if (onRamp45)
+            isGrounded = true;
     }
 
     public void WallCheck()
