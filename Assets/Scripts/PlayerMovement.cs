@@ -29,9 +29,9 @@ public class PlayerMovement : MonoBehaviour
     float wallJumpPushTimer = 0f;
     float wallJumpDir = 0f;                    // -1 sinistra, +1 destra
 
-    [Header("Ramp +45° (dedicated collider)")]
+    [Header("Ramp +45 (dedicated collider)")]
     public CapsuleCollider2D playerCapsule;   // la tua capsule del player
-    public Collider2D ramp45Collider;         // il PolygonCollider2D SOLO della rampa +45°
+    public Collider2D ramp45Collider;         // il PolygonCollider2D SOLO della rampa +45
     public float stickToRamp = 3f;            // spinta verso la rampa per non staccarsi
     bool onRamp45;
 
@@ -124,7 +124,7 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3Int cell = groundTilemap.WorldToCell(wp);
 
-        // Se la cella contiene un tile, il punto è "dentro il terreno"
+        // Se la cella contiene un tile, il punto  "dentro il terreno"
         isOnWall = groundTilemap.HasTile(cell);
     }
 
@@ -182,14 +182,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyRamp45Motion()
     {
-        // tangente alla rampa +45°: (1,1) normalizzata
+        // tangente alla rampa +45: (1,1) normalizzata
         const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
         Vector2 tangent = new Vector2(SQ2_2, SQ2_2);
 
-        // normale "verso l'alto" per rampa +45°: (-1, +1) normalizzata
+        // normale "verso l'alto" per rampa +45: (-1, +1) normalizzata
         Vector2 rampNormal = new Vector2(-SQ2_2, SQ2_2);
 
-        // velocità target lungo la tangente in base all'input orizzontale
+        // velocit target lungo la tangente in base all'input orizzontale
         float speedAlong = horizontalMovement * playerSpeed;
         Vector2 tangVel = tangent * speedAlong;
 
