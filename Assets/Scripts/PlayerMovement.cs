@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.InputSystem.InputAction;
 
 public class PlayerMovement : MonoBehaviour
@@ -36,7 +37,6 @@ public class PlayerMovement : MonoBehaviour
     const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
     Vector2 tangent_45 = new Vector2(SQ2_2, SQ2_2);
     Vector2 tangent_m45 = new Vector2(-SQ2_2, SQ2_2);
-    Vector2 tangent;
     bool onRamp_45, onRamp_m45;
 
     [Header("SFX")]
@@ -81,18 +81,20 @@ public class PlayerMovement : MonoBehaviour
             wallJumpPushTimer = 0f;
             if (onRamp_45 | onRamp_m45)
             {
-                // velocit target lungo la tangente in base all'input orizzontale
                 if (onRamp_45)
-                    tangent = tangent_45;
+                {
+                    Vector2 final = tangent_45 * body.linearVelocityX;
+                    body.linearVelocityX = final.x;
+                    if (!jumpPressed)
+                        body.linearVelocityY = final.y;
+                }
                 else
-                    tangent = tangent_m45;
-
-                Vector2 tangVel = tangent * body.linearVelocityX;
-                Vector2 final = tangVel;
-
-                body.linearVelocityX = final.x;
-                if (!jumpPressed)
-                    body.linearVelocityY = final.y;
+                {
+                    Vector2 final = tangent_m45 * Mathf.Abs(body.linearVelocityX);
+                    body.linearVelocityX = final.x * -Mathf.Sign(body.linearVelocityX);
+                    if (!jumpPressed)
+                        body.linearVelocityY = final.y * -Mathf.Sign(body.linearVelocityX);
+                }
             }
         }
         if (!isGrounded && jumpPressed)
