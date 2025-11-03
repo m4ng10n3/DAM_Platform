@@ -1,16 +1,15 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.InputSystem.InputAction;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("General Settings")]
-    public float playerSpeed = 10;
-    public float jumpForce = 10;
+    public float playerSpeed = 10f;
+    public float jumpForce = 10f;
 
     [Header("Gravity Settings")]
-    public float baseGravity = 2;
+    public float baseGravity = 2f;
     public float maxFallSpeed = 18f;
     public float fallSpeedMultiplier = 2f;
 
@@ -26,18 +25,18 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Wall Jump")]
     public float wallJumpPush = 10f;
-    public float wallJumpPushDuration = 0.1f; // quanto dura la spinta
+    public float wallJumpPushDuration = 0.1f;   // durata spinta orizzontale
     float wallJumpPushTimer = 0f;
-    float wallJumpDir = 0f;                    // -1 sinistra, +1 destra
+    float wallJumpDir = 0f;                     // -1 sinistra, +1 destra
 
-    [Header("Ramp +45 (dedicated collider)")]
-    public CapsuleCollider2D playerCapsule;   // la tua capsule del player
-    public Collider2D ramp_45Collider;         // il PolygonCollider2D SOLO della rampa +45
-    public Collider2D ramp_m45Collider;         // il PolygonCollider2D SOLO della rampa -45
-    const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
-    Vector2 tangent_45 = new Vector2(SQ2_2, SQ2_2);
-    Vector2 tangent_m45 = new Vector2(-SQ2_2, SQ2_2);
-    bool onRamp_45, onRamp_m45;
+    [Header("Ramp ±45 (dedicated colliders)")]
+    public CapsuleCollider2D playerCapsule;     // capsule del player
+    public LayerMask rampPlus45Layer;   // Layer: SlopePlus45
+    public LayerMask rampMinus45Layer;  // Layer: SlopeMinus45
+    const float SQ2_2 = 0.70710678f;            // 1/sqrt(2)
+    static readonly Vector2 tangent45 = new Vector2(SQ2_2, SQ2_2);
+    static readonly Vector2 tangentM45 = new Vector2(-SQ2_2, SQ2_2);
+    bool onRamp45, onRampM45;
 
     [Header("SFX")]
     public AudioClip JumpSFX;
@@ -45,85 +44,61 @@ public class PlayerMovement : MonoBehaviour
     [Header("Components")]
     public Animator playerAnimator;
     public SpriteRenderer spriteRenderer;
+    public AudioSource audioSource;
     Rigidbody2D body;
 
     bool facingRight = true;
-    public AudioSource audioSource;
     public float wallspan = 0.71f;
 
-    float horizontalMovement = 0;
-
-    
+    float horizontalMovement = 0f;
     bool jumpPressed = false;
-    private void Awake()
-    {
-        body = GetComponent<Rigidbody2D>();
-    }
 
-    public void FixedUpdate()
+    void Awake() => body = GetComponent<Rigidbody2D>();
+
+    void FixedUpdate()
     {
-        onRamp_45 = Physics2D.IsTouching(playerCapsule, ramp_45Collider);
-        onRamp_m45 = Physics2D.IsTouching(playerCapsule, ramp_m45Collider);
-        if (wallJumpPushTimer > 0f && horizontalMovement == 0)
+        // Stato rampe
+        onRamp45 = Physics2D.OverlapCapsule(playerCapsule.bounds.center, playerCapsule.size,
+                                     CapsuleDirection2D.Vertical, 0f, rampPlus45Layer);
+        onRampM45 = Physics2D.OverlapCapsule(playerCapsule.bounds.center, playerCapsule.size,
+                                             CapsuleDirection2D.Vertical, 0f, rampMinus45Layer);
+
+
+        // Spinta orizzontale post wall-jump se non c'è input
+        if (wallJumpPushTimer > 0f && Mathf.Approximately(horizontalMovement, 0f))
         {
-            body.linearVelocityX = wallJumpDir * wallJumpPush * (1 - (wallJumpPushDuration - wallJumpPushTimer) / wallJumpPushDuration);
+            float t = 1f - (wallJumpPushDuration - wallJumpPushTimer) / wallJumpPushDuration;
+            body.linearVelocityX = wallJumpDir * wallJumpPush * t;
             wallJumpPushTimer -= Time.fixedDeltaTime;
-            /*
-            Debug.Log("Timer");
-            Debug.Log(wallJumpPushTimer);
-            Debug.Log("wallJumpDir");
-            Debug.Log(wallJumpDir);
-            */
         }
         else
         {
             body.linearVelocityX = horizontalMovement * playerSpeed;
             wallJumpPushTimer = 0f;
-            if (onRamp_45 | onRamp_m45)
-            {
-                if (onRamp_45)
-                {
-                    Vector2 final = tangent_45 * body.linearVelocityX;
-                    body.linearVelocityX = final.x;
-                    if (!jumpPressed)
-                        body.linearVelocityY = final.y;
-                }
-                else
-                {
-                    Vector2 final = tangent_m45 * Mathf.Abs(body.linearVelocityX);
-                    body.linearVelocityX = final.x * -Mathf.Sign(body.linearVelocityX);
-                    if (!jumpPressed)
-                        body.linearVelocityY = final.y * -Mathf.Sign(body.linearVelocityX);
-                }
-            }
+            ApplyRampMotion(); // proietta il movimento lungo la rampa se presente e non in salto
         }
-        if (!isGrounded && jumpPressed)
-            jumpPressed = false;
+
+        if (!isGrounded && jumpPressed) jumpPressed = false;
+
         GroundCheck();
         WallCheck();
-        SetGravity();
+        ApplyGravity();
     }
 
-    public void Update()
+    void Update()
     {
         playerAnimator.SetFloat("XSpeed", Mathf.Abs(body.linearVelocityX));
         playerAnimator.SetFloat("YSpeed", body.linearVelocityY);
         playerAnimator.SetBool("isGrounded", isGrounded);
         playerAnimator.SetBool("isOnWall", isOnWall);
 
-        if (horizontalMovement > 0 && !facingRight)
-        {
-            Flip();
-        }
-        else if (horizontalMovement < 0 && facingRight)
-        {
-            Flip();
-        }
+        if (horizontalMovement > 0f && !facingRight) Flip();
+        else if (horizontalMovement < 0f && facingRight) Flip();
     }
 
-    private void SetGravity()
+    void ApplyGravity()
     {
-        if (body.linearVelocityY < 0)
+        if (body.linearVelocityY < 0f)
         {
             body.gravityScale = baseGravity * fallSpeedMultiplier;
             body.linearVelocityY = Mathf.Max(body.linearVelocityY, -maxFallSpeed);
@@ -134,23 +109,35 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void GroundCheck()
+    void ApplyRampMotion()
     {
-        Vector3 wp = groundCheckTransform.position;
-        Vector3Int cell = groundTilemap.WorldToCell(wp);
-        isGrounded = groundTilemap.HasTile(cell);
-        if (onRamp_45)
-            isGrounded = true;
+        if (jumpPressed) return;                   // non alterare la traiettoria durante il salto
+        if (!(onRamp45 || onRampM45)) return;
+
+        if (onRamp45)
+        {
+            Vector2 v = tangent45 * body.linearVelocityX;
+            body.linearVelocityX = v.x;
+            body.linearVelocityY = v.y;
+        }
+        else // rampa -45
+        {
+            float sx = Mathf.Sign(body.linearVelocityX);
+            Vector2 v = tangentM45 * Mathf.Abs(body.linearVelocityX);
+            body.linearVelocityX = -sx * v.x;
+            body.linearVelocityY = -sx * v.y;
+        }
     }
 
-    public void WallCheck()
+    void GroundCheck()
     {
-        // Punto da controllare (leggermente sotto i piedi)
-        Vector3 wp = wallCheckTransform.position;
+        Vector3Int cell = groundTilemap.WorldToCell(groundCheckTransform.position);
+        isGrounded = groundTilemap.HasTile(cell) || onRamp45; // come nel codice originale
+    }
 
-        Vector3Int cell = groundTilemap.WorldToCell(wp);
-
-        // Se la cella contiene un tile, il punto  "dentro il terreno"
+    void WallCheck()
+    {
+        Vector3Int cell = groundTilemap.WorldToCell(wallCheckTransform.position);
         isOnWall = groundTilemap.HasTile(cell);
     }
 
@@ -162,9 +149,9 @@ public class PlayerMovement : MonoBehaviour
     public void PlayerInput_Jump(CallbackContext context)
     {
         jumpPressed = true;
+
         if (isGrounded)
         {
-
             if (context.performed)
             {
                 body.linearVelocityY = jumpForce;
@@ -176,46 +163,31 @@ public class PlayerMovement : MonoBehaviour
             if (context.performed)
             {
                 body.linearVelocityY = jumpForce;
-                wallJumpDir = facingRight ? -1 : 1;
+                wallJumpDir = facingRight ? -1f : 1f;
                 wallJumpPushTimer = wallJumpPushDuration;
                 Flip();
                 audioSource.PlayOneShot(JumpSFX);
             }
         }
 
-        if (context.canceled && body.linearVelocityY > 0)
+        if (context.canceled && body.linearVelocityY > 0f)
         {
-            body.linearVelocityY = body.linearVelocityY / 2;
+            body.linearVelocityY *= 0.5f;
         }
-
     }
 
-    private void Flip()
+    void Flip()
     {
         Vector3 pos = wallCheckTransform.localPosition;
-        if (facingRight)
-        {
-            pos.x -= wallspan;
-        }
-        else
-        {
-            pos.x += wallspan;
-        }
+        pos.x += facingRight ? -wallspan : wallspan; // sposta il punto di wall check
         facingRight = !facingRight;
         spriteRenderer.flipX = !spriteRenderer.flipX;
         wallCheckTransform.localPosition = pos;
     }
 
-    public void OnDrawGizmos()
+    void OnDrawGizmos()
     {
-        //Gizmos.DrawCube(groundCheckTransform.position, groundCheckSize);
-        //Gizmos.DrawCube(wallCheckTransform.position, wallCheckSize);
-        Vector3 g = groundCheckTransform.position;
-        Gizmos.DrawWireSphere(g, 0.03f);
-
-        Vector3 w = wallCheckTransform.position;
-        Gizmos.DrawWireSphere(w, 0.03f);
+        Gizmos.DrawWireSphere(groundCheckTransform.position, 0.03f);
+        Gizmos.DrawWireSphere(wallCheckTransform.position, 0.03f);
     }
-
-
 }
