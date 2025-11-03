@@ -31,9 +31,13 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Ramp +45 (dedicated collider)")]
     public CapsuleCollider2D playerCapsule;   // la tua capsule del player
-    public Collider2D ramp45Collider;         // il PolygonCollider2D SOLO della rampa +45
-    public float stickToRamp = 3f;            // spinta verso la rampa per non staccarsi
-    bool onRamp45;
+    public Collider2D ramp_45Collider;         // il PolygonCollider2D SOLO della rampa +45
+    public Collider2D ramp_m45Collider;         // il PolygonCollider2D SOLO della rampa -45
+    const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
+    Vector2 tangent_45 = new Vector2(SQ2_2, SQ2_2);
+    Vector2 tangent_m45 = new Vector2(-SQ2_2, SQ2_2);
+    Vector2 tangent;
+    bool onRamp_45, onRamp_m45;
 
     [Header("SFX")]
     public AudioClip JumpSFX;
@@ -49,8 +53,7 @@ public class PlayerMovement : MonoBehaviour
 
     float horizontalMovement = 0;
 
-    const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
-    Vector2 tangent = new Vector2(SQ2_2, SQ2_2);
+    
     bool jumpPressed = false;
     private void Awake()
     {
@@ -59,7 +62,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void FixedUpdate()
     {
-        onRamp45 = Physics2D.IsTouching(playerCapsule, ramp45Collider);
+        onRamp_45 = Physics2D.IsTouching(playerCapsule, ramp_45Collider);
+        onRamp_m45 = Physics2D.IsTouching(playerCapsule, ramp_m45Collider);
         if (wallJumpPushTimer > 0f && horizontalMovement == 0)
         {
             body.linearVelocityX = wallJumpDir * wallJumpPush * (1 - (wallJumpPushDuration - wallJumpPushTimer) / wallJumpPushDuration);
@@ -75,11 +79,15 @@ public class PlayerMovement : MonoBehaviour
         {
             body.linearVelocityX = horizontalMovement * playerSpeed;
             wallJumpPushTimer = 0f;
-            if (onRamp45)
+            if (onRamp_45 | onRamp_m45)
             {
                 // velocit target lungo la tangente in base all'input orizzontale
-                Vector2 tangVel = tangent * body.linearVelocityX;
+                if (onRamp_45)
+                    tangent = tangent_45;
+                else
+                    tangent = tangent_m45;
 
+                Vector2 tangVel = tangent * body.linearVelocityX;
                 Vector2 final = tangVel;
 
                 body.linearVelocityX = final.x;
@@ -129,7 +137,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 wp = groundCheckTransform.position;
         Vector3Int cell = groundTilemap.WorldToCell(wp);
         isGrounded = groundTilemap.HasTile(cell);
-        if (onRamp45)
+        if (onRamp_45)
             isGrounded = true;
     }
 
