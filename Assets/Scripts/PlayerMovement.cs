@@ -83,11 +83,7 @@ public class PlayerMovement : MonoBehaviour
                 Vector2 final = tangVel;
 
                 body.linearVelocityX = final.x;
-                if (jumpPressed)
-                {
-                    body.linearVelocityY += final.y;
-                }
-                else
+                if (!jumpPressed)
                     body.linearVelocityY = final.y;
             }
         }
