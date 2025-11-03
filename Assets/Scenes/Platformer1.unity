@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 21337696}
   - component: {fileID: 21337698}
   - component: {fileID: 21337697}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ramp_45
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -182,9 +182,9 @@ PolygonCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
-  m_CompositeOperation: 1
+  m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
@@ -14037,8 +14037,12 @@ MonoBehaviour:
   wallJumpPush: 10
   wallJumpPushDuration: 0.5
   playerCapsule: {fileID: 357228273}
-  ramp_45Collider: {fileID: 21337697}
-  ramp_m45Collider: {fileID: 1121736514}
+  rampPlus45Layer:
+    serializedVersion: 2
+    m_Bits: 128
+  rampMinus45Layer:
+    serializedVersion: 2
+    m_Bits: 256
   JumpSFX: {fileID: 8300000, guid: 01e8bfeb3c613234194cc0bd7bca98f3, type: 3}
   playerAnimator: {fileID: 357228272}
   spriteRenderer: {fileID: 461591590}
@@ -15340,7 +15344,7 @@ GameObject:
   - component: {fileID: 1121736513}
   - component: {fileID: 1121736515}
   - component: {fileID: 1121736514}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Ramp_m45
   m_TagString: Untagged
   m_Icon: {fileID: 0}
