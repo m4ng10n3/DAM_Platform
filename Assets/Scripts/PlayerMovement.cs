@@ -17,14 +17,14 @@ public class PlayerMovement : MonoBehaviour
     public Transform groundCheckTransform;
     public LayerMask groundLayer;
     public Tilemap groundTilemap;
-    bool isGrounded;    
-    
+    bool isGrounded;
+
     [Header("Wall Check")]
     public Transform wallCheckTransform;
     bool isOnWall;
 
     [Header("Wall Jump")]
-    public float wallJumpPush = 10f;            
+    public float wallJumpPush = 10f;
     public float wallJumpPushDuration = 0.1f; // quanto dura la spinta
     float wallJumpPushTimer = 0f;
     float wallJumpDir = 0f;                    // -1 sinistra, +1 destra
@@ -42,13 +42,16 @@ public class PlayerMovement : MonoBehaviour
     public Animator playerAnimator;
     public SpriteRenderer spriteRenderer;
     Rigidbody2D body;
-    
+
     bool facingRight = true;
     public AudioSource audioSource;
     public float wallspan = 0.71f;
 
     float horizontalMovement = 0;
 
+    const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
+    Vector2 tangent = new Vector2(SQ2_2, SQ2_2);
+    bool jumpPressed = false;
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
@@ -57,9 +60,9 @@ public class PlayerMovement : MonoBehaviour
     public void FixedUpdate()
     {
         onRamp45 = Physics2D.IsTouching(playerCapsule, ramp45Collider);
-        if (wallJumpPushTimer > 0f && horizontalMovement==0)
+        if (wallJumpPushTimer > 0f && horizontalMovement == 0)
         {
-            body.linearVelocityX = wallJumpDir * wallJumpPush * (1-(wallJumpPushDuration-wallJumpPushTimer)/wallJumpPushDuration);
+            body.linearVelocityX = wallJumpDir * wallJumpPush * (1 - (wallJumpPushDuration - wallJumpPushTimer) / wallJumpPushDuration);
             wallJumpPushTimer -= Time.fixedDeltaTime;
             /*
             Debug.Log("Timer");
@@ -73,8 +76,23 @@ public class PlayerMovement : MonoBehaviour
             body.linearVelocityX = horizontalMovement * playerSpeed;
             wallJumpPushTimer = 0f;
             if (onRamp45)
-                ApplyRamp45Motion();
+            {
+                // velocit target lungo la tangente in base all'input orizzontale
+                Vector2 tangVel = tangent * body.linearVelocityX;
+
+                Vector2 final = tangVel;
+
+                body.linearVelocityX = final.x;
+                if (jumpPressed)
+                {
+                    body.linearVelocityY += final.y;
+                }
+                else
+                    body.linearVelocityY = final.y;
+            }
         }
+        if (!isGrounded && jumpPressed)
+            jumpPressed = false;
         GroundCheck();
         WallCheck();
         SetGravity();
@@ -135,7 +153,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void PlayerInput_Jump(CallbackContext context)
     {
-
+        jumpPressed = true;
         if (isGrounded)
         {
 
@@ -179,33 +197,6 @@ public class PlayerMovement : MonoBehaviour
         spriteRenderer.flipX = !spriteRenderer.flipX;
         wallCheckTransform.localPosition = pos;
     }
-
-    private void ApplyRamp45Motion()
-    {
-        // tangente alla rampa +45: (1,1) normalizzata
-        const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
-        Vector2 tangent = new Vector2(SQ2_2, SQ2_2);
-
-        // normale "verso l'alto" per rampa +45: (-1, +1) normalizzata
-        Vector2 rampNormal = new Vector2(-SQ2_2, SQ2_2);
-
-        // velocit target lungo la tangente in base all'input orizzontale
-        float speedAlong = horizontalMovement * playerSpeed;
-        Vector2 tangVel = tangent * speedAlong;
-
-        // piccolo stick per restare aderenti (spinta verso la rampa)
-        Vector2 stickVel = -rampNormal * stickToRamp;
-
-        Vector2 final = tangVel + stickVel;
-
-        // evita di creare "spinta verso l'alto" quando cammini piano in salita
-        if (final.y > 0f && Mathf.Abs(speedAlong) < playerSpeed * 0.2f)
-            final.y = 0f;
-
-        body.linearVelocityX = final.x;
-        body.linearVelocityY = final.y;
-    }
-
 
     public void OnDrawGizmos()
     {
