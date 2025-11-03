@@ -29,6 +29,12 @@ public class PlayerMovement : MonoBehaviour
     float wallJumpPushTimer = 0f;
     float wallJumpDir = 0f;                    // -1 sinistra, +1 destra
 
+    [Header("Ramp +45° (dedicated collider)")]
+    public CapsuleCollider2D playerCapsule;   // la tua capsule del player
+    public Collider2D ramp45Collider;         // il PolygonCollider2D SOLO della rampa +45°
+    public float stickToRamp = 3f;            // spinta verso la rampa per non staccarsi
+    bool onRamp45;
+
     [Header("SFX")]
     public AudioClip JumpSFX;
 
@@ -50,9 +56,10 @@ public class PlayerMovement : MonoBehaviour
 
     public void FixedUpdate()
     {
+        onRamp45 = Physics2D.IsTouching(playerCapsule, ramp45Collider);
         if (wallJumpPushTimer > 0f && horizontalMovement==0)
         {
-            body.linearVelocityX = wallJumpDir * wallJumpPush;
+            body.linearVelocityX = wallJumpDir * wallJumpPush * (1-(wallJumpPushDuration-wallJumpPushTimer)/wallJumpPushDuration);
             wallJumpPushTimer -= Time.fixedDeltaTime;
             /*
             Debug.Log("Timer");
@@ -65,6 +72,8 @@ public class PlayerMovement : MonoBehaviour
         {
             body.linearVelocityX = horizontalMovement * playerSpeed;
             wallJumpPushTimer = 0f;
+            if (onRamp45)
+                ApplyRamp45Motion();
         }
         GroundCheck();
         WallCheck();
@@ -103,12 +112,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void GroundCheck()
     {
-        // Punto da controllare (leggermente sotto i piedi)
         Vector3 wp = groundCheckTransform.position;
-
         Vector3Int cell = groundTilemap.WorldToCell(wp);
-
-        // Se la cella contiene un tile, il punto è "dentro il terreno"
         isGrounded = groundTilemap.HasTile(cell);
     }
 
@@ -174,6 +179,33 @@ public class PlayerMovement : MonoBehaviour
         spriteRenderer.flipX = !spriteRenderer.flipX;
         wallCheckTransform.localPosition = pos;
     }
+
+    private void ApplyRamp45Motion()
+    {
+        // tangente alla rampa +45°: (1,1) normalizzata
+        const float SQ2_2 = 0.70710678f; // 1/sqrt(2)
+        Vector2 tangent = new Vector2(SQ2_2, SQ2_2);
+
+        // normale "verso l'alto" per rampa +45°: (-1, +1) normalizzata
+        Vector2 rampNormal = new Vector2(-SQ2_2, SQ2_2);
+
+        // velocità target lungo la tangente in base all'input orizzontale
+        float speedAlong = horizontalMovement * playerSpeed;
+        Vector2 tangVel = tangent * speedAlong;
+
+        // piccolo stick per restare aderenti (spinta verso la rampa)
+        Vector2 stickVel = -rampNormal * stickToRamp;
+
+        Vector2 final = tangVel + stickVel;
+
+        // evita di creare "spinta verso l'alto" quando cammini piano in salita
+        if (final.y > 0f && Mathf.Abs(speedAlong) < playerSpeed * 0.2f)
+            final.y = 0f;
+
+        body.linearVelocityX = final.x;
+        body.linearVelocityY = final.y;
+    }
+
 
     public void OnDrawGizmos()
     {
